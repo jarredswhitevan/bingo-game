@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>2025 Bingo Card</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #121826;
+      --tile: #0f172a;
+      --tile2: #111c33;
+      --text: #e6edf6;
+      --muted: #97a3b6;
+      --accent: #22c55e;
+      --border: rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(34,197,94,.20), transparent 50%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(59,130,246,.18), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+    .wrap { width: min(980px, 100%); }
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      letter-spacing: .2px;
+    }
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .panel {
+      background: rgba(18,24,38,.7);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button, input[type="text"] {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,.8);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      transition: transform .06s ease, border-color .2s ease, background .2s ease;
+      user-select: none;
+    }
+    button:hover { border-color: rgba(34,197,94,.45); }
+    button:active { transform: translateY(1px); }
+
+    .btn-accent { border-color: rgba(34,197,94,.55); }
+    .btn-accent:hover { background: rgba(34,197,94,.10); }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,.55);
+    }
+    .toggle input { width: 18px; height: 18px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .tile {
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(17,28,51,.9), rgba(15,23,42,.9));
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s ease, transform .08s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    .tile:hover { border-color: rgba(255,255,255,.18); }
+    .tile:active { transform: scale(.99); }
+
+    .tile .text {
+      font-size: clamp(12px, 1.6vw, 16px);
+      line-height: 1.15;
+      padding: 2px 4px;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .marked {
+      border-color: rgba(34,197,94,.6);
+      box-shadow: 0 10px 24px rgba(34,197,94,.12), 0 6px 16px rgba(0,0,0,.25);
+    }
+    .marked::after {
+      content: "✓";
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(34,197,94,.35);
+    }
+
+    .edit-hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .editor {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,.65);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.35;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,.55);
+      padding: 20px;
+    }
+    .modal.open { display: grid; }
+    .modal-card {
+      width: min(680px, 100%);
+      background: rgba(18,24,38,.95);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .modal-card h2 { margin: 0 0 10px; font-size: 18px; }
+    .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 10px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1>“That was NOT on my 2025 bingo card”</h1>
+        <div class="sub">
+          Tap a square to mark it. Turn on <b>Edit Mode</b> to change text.
+          Export/Import lets you save/share your card.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <div class="row">
+          <label class="toggle">
+            <input id="editMode" type="checkbox" />
+            <span>Edit Mode</span>
+          </label>
+
+          <button id="clearMarks">Clear marks</button>
+          <button id="resetTexts">Reset texts</button>
+          <button id="shuffle" class="btn-accent">Shuffle entries</button>
+          <button id="exportBtn">Export</button>
+          <button id="importBtn">Import</button>
+        </div>
+
+        <div class="row">
+          <span class="edit-hint">
+            Tip: In Edit Mode, click a square to edit. Or paste 25 lines into “Bulk fill”.
+          </span>
+        </div>
+      </div>
+
+      <div id="grid" class="grid" aria-label="Bingo grid"></div>
+
+      <div class="editor">
+        <div class="row" style="justify-content: space-between;">
+          <div class="edit-hint"><b>Bulk fill:</b> paste 25 lines (top-left to bottom-right).</div>
+          <button id="applyBulk">Apply bulk fill</button>
+        </div>
+        <textarea id="bulk" placeholder="One item per line (25 lines)..."></textarea>
+        <div class="footer-note">
+          Center square starts as “FREE” (line 13). You can overwrite it in Edit Mode or bulk fill.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="Edit square">
+    <div class="modal-card">
+      <h2>Edit square</h2>
+      <input id="modalInput" type="text" placeholder="Type your bingo item..." />
+      <div class="modal-actions">
+        <button id="modalCancel">Cancel</button>
+        <button id="modalSave" class="btn-accent">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export/Import modal -->
+  <div id="jsonModal" class="modal" role="dialog" aria-modal="true" aria-label="Export / Import">
+    <div class="modal-card">
+      <h2>Export / Import</h2>
+      <div class="edit-hint">Copy to save/share. Paste to import.</div>
+      <textarea id="jsonArea" spellcheck="false"></textarea>
+      <div class="modal-actions">
+        <button id="jsonClose">Close</button>
+        <button id="jsonCopy">Copy</button>
+        <button id="jsonLoad" class="btn-accent">Load</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- State ----
+    const SIZE = 5;
+    const TOTAL = SIZE * SIZE;
+    const LS_KEY = "bingo_2025_v1";
+
+    const defaultTexts = [
+      "Celebrity launches a random product line",
+      "AI does something genuinely helpful",
+      "A “once in a lifetime” event happens again",
+      "Friend gets engaged out of nowhere",
+      "A subscription you forgot about renews",
+      "You get into a new hobby for 48 hours",
+      "Someone says “we need to circle back”",
+      "Internet drama you can’t escape",
+      "You buy something “for productivity”",
+      "A trend you hate becomes unavoidable",
+      "A weirdly specific ad targets you",
+      "You accidentally become the planner",
+      "FREE",
+      "You say “I can fix that” and regret it",
+      "A group chat explodes",
+      "You get ghosted (or do the ghosting)",
+      "A “quick errand” takes 3 hours",
+      "New app update makes things worse",
+      "You learn a word you can’t stop using",
+      "Someone asks for a favor “real quick”",
+      "A small win feels massive",
+      "You meet someone who changes your plans",
+      "You start a project at 11pm",
+      "You get a random fee for no reason",
+      "You say “next year I’m locked in”"
+    ];
+
+    let state = loadState() ?? {
+      texts: [...defaultTexts],
+      marked: Array(TOTAL).fill(false),
+    };
+
+    const elGrid = document.getElementById("grid");
+    const elEditMode = document.getElementById("editMode");
+    const elBulk = document.getElementById("bulk");
+
+    // Modals
+    const modal = document.getElementById("modal");
+    const modalInput = document.getElementById("modalInput");
+    const modalCancel = document.getElementById("modalCancel");
+    const modalSave = document.getElementById("modalSave");
+    let editingIndex = null;
+
+    const jsonModal = document.getElementById("jsonModal");
+    const jsonArea = document.getElementById("jsonArea");
+    const jsonClose = document.getElementById("jsonClose");
+    const jsonCopy = document.getElementById("jsonCopy");
+    const jsonLoad = document.getElementById("jsonLoad");
+
+    // ---- Render ----
+    function render() {
+      elGrid.innerHTML = "";
+      for (let i = 0; i < TOTAL; i++) {
+        const tile = document.createElement("div");
+        tile.className = "tile" + (state.marked[i] ? " marked" : "");
+        tile.setAttribute("data-index", String(i));
+
+        const text = document.createElement("div");
+        text.className = "text";
+        text.textContent = state.texts[i] || "";
+        tile.appendChild(text);
+
+        tile.addEventListener("click", () => onTileClick(i));
+        elGrid.appendChild(tile);
+      }
+      saveState();
+    }
+
+    function onTileClick(i) {
+      if (elEditMode.checked) {
+        openEditModal(i);
+      } else {
+        state.marked[i] = !state.marked[i];
+        render();
+      }
+    }
+
+    // ---- Edit modal ----
+    function openEditModal(i) {
+      editingIndex = i;
+      modalInput.value = state.texts[i] ?? "";
+      modal.classList.add("open");
+      setTimeout(() => modalInput.focus(), 0);
+    }
+    function closeEditModal() {
+      modal.classList.remove("open");
+      editingIndex = null;
+    }
+
+    modalCancel.addEventListener("click", closeEditModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeEditModal(); });
+
+    modalSave.addEventListener("click", () => {
+      if (editingIndex === null) return;
+      state.texts[editingIndex] = modalInput.value.trim();
+      render();
+      closeEditModal();
+    });
+
+    modalInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") modalSave.click();
+      if (e.key === "Escape") closeEditModal();
+    });
+
+    // ---- Export/Import ----
+    function openJsonModal(withText) {
+      jsonArea.value = withText ?? "";
+      jsonModal.classList.add("open");
+      setTimeout(() => jsonArea.focus(), 0);
+    }
+    function closeJsonModal() {
+      jsonModal.classList.remove("open");
+    }
+
+    jsonClose.addEventListener("click", closeJsonModal);
+    jsonModal.addEventListener("click", (e) => { if (e.target === jsonModal) closeJsonModal(); });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const payload = JSON.stringify(state, null, 2);
+      openJsonModal(payload);
+    });
+
+    document.getElementById("importBtn").addEventListener("click", () => {
+      openJsonModal("");
+    });
+
+    jsonCopy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(jsonArea.value);
+        jsonCopy.textContent = "Copied!";
+        setTimeout(() => (jsonCopy.textContent = "Copy"), 900);
+      } catch {
+        alert("Copy failed — you can manually select and copy.");
+      }
+    });
+
+    jsonLoad.addEventListener("click", () => {
+      try {
+        const incoming = JSON.parse(jsonArea.value);
+        if (!incoming || !Array.isArray(incoming.texts) || !Array.isArray(incoming.marked)) {
+          throw new Error("Invalid format.");
+        }
+        if (incoming.texts.length !== TOTAL || incoming.marked.length !== TOTAL) {
+          throw new Error("Must be a 5x5 (25 items) card.");
+        }
+        state = {
+          texts: incoming.texts.map(v => String(v ?? "")),
+          marked: incoming.marked.map(v => !!v),
+        };
+        render();
+        closeJsonModal();
+      } catch (err) {
+        alert("Import failed: " + err.message);
+      }
+    });
+
+    // ---- Buttons ----
+    document.getElementById("clearMarks").addEventListener("click", () => {
+      state.marked = Array(TOTAL).fill(false);
+      render();
+    });
+
+    document.getElementById("resetTexts").addEventListener("click", () => {
+      state.texts = [...defaultTexts];
+      state.marked = Array(TOTAL).fill(false);
+      render();
+    });
+
+    document.getElementById("shuffle").addEventListener("click", () => {
+      // Shuffle texts but keep marked reset (common use)
+      const arr = [...state.texts];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      state.texts = arr;
+      state.marked = Array(TOTAL).fill(false);
+      render();
+    });
+
+    document.getElementById("applyBulk").addEventListener("click", () => {
+      const lines = elBulk.value
+        .split(/\r?\n/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      if (lines.length !== TOTAL) {
+        alert(`Bulk fill needs exactly ${TOTAL} non-empty lines. You currently have ${lines.length}.`);
+        return;
+      }
+      state.texts = lines.slice(0, TOTAL);
+      state.marked = Array(TOTAL).fill(false);
+      render();
+    });
+
+    // ---- Persistence ----
+    function saveState() {
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+      } catch {}
+    }
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.texts) || !Array.isArray(parsed.marked)) return null;
+        if (parsed.texts.length !== TOTAL || parsed.marked.length !== TOTAL) return null;
+        return {
+          texts: parsed.texts.map(v => String(v ?? "")),
+          marked: parsed.marked.map(v => !!v),
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    // init
+    render();
+  </script>
+</body>
+</html>
