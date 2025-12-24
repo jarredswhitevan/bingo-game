@@ -7,36 +7,90 @@
 
   <style>
     :root{
-      --bg:#0b0f14; --panel:#121826; --tile:#0f172a; --border:rgba(255,255,255,.12);
-      --text:#e5e7eb; --muted:#9ca3af;
+      --bg:#0b0f14;
+      --panel:#121826;
+      --tile:#0f172a;
+      --border:rgba(255,255,255,.12);
+      --text:#e5e7eb;
+      --muted:#9ca3af;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:16px;
+    }
     h1{text-align:center;margin:4px 0 10px}
 
     .controls{
-      background:var(--panel); border:1px solid var(--border); border-radius:14px;
-      padding:12px; display:grid; gap:10px; margin-bottom:12px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      display:grid;
+      gap:10px;
+      margin-bottom:12px;
     }
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-    label{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px}
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    label{
+      font-size:14px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
     button,input[type="color"]{
-      border-radius:10px;border:1px solid var(--border);background:#111827;color:var(--text);
-      padding:8px 12px;font-size:14px;cursor:pointer
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#111827;
+      color:var(--text);
+      padding:8px 12px;
+      font-size:14px;
+      cursor:pointer;
     }
     button:hover{border-color:#6b7280}
 
-    .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+    }
     .tile{
-      aspect-ratio:1/1; background:var(--tile); border:1px solid var(--border); border-radius:12px;
-      padding:8px; text-align:center; font-size:13px; line-height:1.2;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; user-select:none; transition:transform .05s ease;
+      aspect-ratio:1/1;
+      background:var(--tile);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px;
+      text-align:center;
+      font-size:13px;
+      line-height:1.2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .05s ease;
     }
     .tile:active{transform:scale(.97)}
-    .marked{color:#000;font-weight:800}
-    .hint{color:var(--muted);font-size:12px;text-align:center;margin-top:10px}
-    .status{color:var(--muted);font-size:12px;text-align:center;margin-top:6px}
+    .marked{
+      color:#000;
+      font-weight:800;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+      margin-top:10px;
+    }
   </style>
 </head>
 
@@ -49,18 +103,19 @@
         Mark color:
         <input type="color" id="colorPicker" value="#22c55e">
       </label>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="shuffleBtn">Shuffle Card</button>
         <button id="clearBtn">Clear Marks</button>
-        <button id="resetStorageBtn">Reset Storage</button>
+        <button id="resetBtn">Reset Card</button>
       </div>
     </div>
   </div>
 
   <div id="grid" class="grid"></div>
-  <div class="hint">Progress saves automatically · Confirm required before marking</div>
-  <div id="status" class="status"></div>
+
+  <div class="hint">
+    FREE SPACE is always active · Progress saves automatically · Confirm before marking
+  </div>
 
 <script>
 (() => {
@@ -71,7 +126,7 @@
     "Laura cries",
     "Laura gets offended",
     "Laura tries to tell someone they are wrong",
-    "Big deal over secret Santa gifts",
+    "Laura makes a big deal over secret Santa gifts",
     "David tries to impress everyone",
     "Laura dry begs",
     "Laura complains about not having money",
@@ -93,11 +148,11 @@
   ];
 
   const TOTAL = 25;
-  const STORAGE_KEY = "game_of_laura_v2";
+  const FREE_INDEX = 12;
+  const STORAGE_KEY = "game_of_laura_final";
 
   const grid = document.getElementById("grid");
   const colorPicker = document.getElementById("colorPicker");
-  const status = document.getElementById("status");
 
   function shuffle(arr){
     for(let i = arr.length - 1; i > 0; i--){
@@ -108,11 +163,16 @@
   }
 
   function freshState(){
-    return {
-      texts: shuffle([...PHRASES]),
-      marked: Array(TOTAL).fill(false),
-      colors: Array(TOTAL).fill(null)
-    };
+    const texts = shuffle([...PHRASES]);
+    texts[FREE_INDEX] = "FREE SPACE";
+
+    const marked = Array(TOTAL).fill(false);
+    const colors = Array(TOTAL).fill(null);
+
+    marked[FREE_INDEX] = true;
+    colors[FREE_INDEX] = colorPicker.value;
+
+    return { texts, marked, colors };
   }
 
   function isValidState(s){
@@ -127,7 +187,14 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return null;
       const parsed = JSON.parse(raw);
-      return isValidState(parsed) ? parsed : null;
+      if(!isValidState(parsed)) return null;
+
+      // enforce FREE SPACE always
+      parsed.texts[FREE_INDEX] = "FREE SPACE";
+      parsed.marked[FREE_INDEX] = true;
+      parsed.colors[FREE_INDEX] ||= colorPicker.value;
+
+      return parsed;
     } catch {
       return null;
     }
@@ -139,17 +206,11 @@
     } catch {}
   }
 
-  function setStatus(msg){
-    status.textContent = msg || "";
-  }
-
   let state = loadState() || freshState();
 
   function render(){
-    // Hard guard so we never show a blank screen
-    if(!isValidState(state)) state = freshState();
-
     grid.innerHTML = "";
+
     for(let i = 0; i < TOTAL; i++){
       const tile = document.createElement("div");
       tile.className = "tile";
@@ -157,7 +218,7 @@
 
       if(state.marked[i]){
         tile.classList.add("marked");
-        tile.style.background = state.colors[i] || colorPicker.value;
+        tile.style.background = state.colors[i];
       }
 
       tile.addEventListener("click", () => toggleTile(i));
@@ -165,10 +226,11 @@
     }
 
     saveState();
-    setStatus("Saved on this device.");
   }
 
   function toggleTile(i){
+    if(i === FREE_INDEX) return;
+
     if(!state.marked[i]){
       if(!confirm("Mark this square?")) return;
       state.marked[i] = true;
@@ -181,27 +243,30 @@
     render();
   }
 
-  document.getElementById("shuffleBtn").addEventListener("click", () => {
+  document.getElementById("shuffleBtn").onclick = () => {
     if(!confirm("Shuffle card? This will reset marks.")) return;
     state = freshState();
     render();
-  });
+  };
 
-  document.getElementById("clearBtn").addEventListener("click", () => {
+  document.getElementById("clearBtn").onclick = () => {
     if(!confirm("Clear all marks?")) return;
     state.marked = Array(TOTAL).fill(false);
     state.colors = Array(TOTAL).fill(null);
-    render();
-  });
 
-  document.getElementById("resetStorageBtn").addEventListener("click", () => {
-    if(!confirm("Reset storage on this device? (Fresh card + clears everything)")) return;
-    try{ localStorage.removeItem(STORAGE_KEY); } catch {}
+    state.marked[FREE_INDEX] = true;
+    state.colors[FREE_INDEX] = colorPicker.value;
+
+    render();
+  };
+
+  document.getElementById("resetBtn").onclick = () => {
+    if(!confirm("Reset everything on this device?")) return;
+    localStorage.removeItem(STORAGE_KEY);
     state = freshState();
     render();
-  });
+  };
 
-  // Initial paint
   render();
 })();
 </script>
